@@ -63,9 +63,8 @@ f = open(os.path.join("sql", "3_dataproduct_type.sql"))
 liste_req = epurer(f.read()).split(";")
 for req in liste_req[:-1] :
     cur.execute(req)
-    logMe(cur.query.decode("UTF-8"))
+    logMe(cur.query.decode("UTF-8"), False)
 f.close()
-
 
 
 
@@ -73,7 +72,7 @@ f.close()
 
 # validation du travail :
 conn.commit()
-logMe("Commit")
+logMe("Commit", False)
 
 
 
