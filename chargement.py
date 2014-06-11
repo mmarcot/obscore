@@ -81,7 +81,7 @@ except :
 cur = conn.cursor()
 
 # choisir les étapes à executer :
-exec_all = False
+exec_all = True
 exec_vider = False
 exec_insert = False
 exec_obs_collection = False
@@ -91,7 +91,7 @@ exec_obs_publisher_did = False
 exec_obs_creator_name = True
 
 
-# chargement de la liste des collections (_image) et des classes (imgj_aa_ ..) :
+# chargement de la liste des collections (.._image) et des classes (imgj_aa_ ..) :
 f_class = open("liste_classes_db.txt")
 f_collec = open("liste_collec_db.txt")
 liste_classes = f_class.readlines()
@@ -184,6 +184,7 @@ if exec_dataproduct_type or exec_all :
 
 # ############## 4_obs_id ############## :
 if exec_obs_id or exec_all :
+    res = []
     cur.execute("""
         select oidsaada, filename
         from saada_loaded_file
@@ -210,9 +211,48 @@ if exec_obs_publisher_did or exec_all :
     
 # ############## 6_obs_creator_name ############## :
 if exec_obs_creator_name or exec_all :
+    res = []
+    
     cur.execute("""
-        select
+        select name_coll 
+        from saada_metaclass_image 
+        where name_attr like '_origin'
         """)
+    res_ori = cur.fetchall();
+    ls_name_class_ori = []
+    for e in res_ori :
+        ls_name_class_ori.append(e[0].lower())
+    
+    cur.execute("""
+        select name_coll 
+        from saada_metaclass_image 
+        where name_attr like '_creator'
+        """)
+    res_crea = cur.fetchall();
+    ls_name_class_crea = []
+    for e in res_crea :
+        ls_name_class_crea.append(e[0].lower())
+    
+    
+    for classe in liste_classes :
+        if classe[3:] in ls_name_class_ori :
+            cur.execute("""
+                select oidsaada, _origin
+                from """ + classe + ";")
+            res += cur.fetchall()
+    
+        if classe[3:] in ls_name_class_crea :
+            cur.execute("""
+                select oidsaada, _creator
+                from """ + classe + ";")
+            res += cur.fetchall()
+            
+    for tu in res :
+        cur.execute("update obscore set obs_creator_name='" + str(tu[1]) + 
+                    "' where obscore.oidsaada=" + str(tu[0]) + ";")
+    
+    conn.commit()
+    logMe("Commit obs_creator_name [OK]")
 
 
 
