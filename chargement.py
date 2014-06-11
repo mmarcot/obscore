@@ -73,7 +73,7 @@ def enleverExtension(ch):
 
 try :
     conn = psycopg2.connect("dbname='VizieR' user='postgres' host='localhost' password='reverser'")
-    logMe("Connection établie")
+    logMe("Connection à la BDD établie")
 except :
     logMe("Erreur lors de la connection à la BDD")
     exit(1)
@@ -87,7 +87,22 @@ exec_insert = False
 exec_obs_collection = False
 exec_dataproduct_type = False
 exec_obs_id = False
-exec_obs_publisher_did = True
+exec_obs_publisher_did = False
+exec_obs_creator_name = True
+
+
+# chargement de la liste des collections (_image) et des classes (imgj_aa_ ..) :
+f_class = open("liste_classes_db.txt")
+f_collec = open("liste_collec_db.txt")
+liste_classes = f_class.readlines()
+liste_collec = f_collec.readlines()
+for i in range(len(liste_classes)) :
+    liste_classes[i] = liste_classes[i].strip()
+for i in range(len(liste_collec)) :
+    liste_collec[i] = liste_collec[i].strip()
+f_class.close()
+f_collec.close()
+
 
 
 # on vide la BDD :
@@ -191,7 +206,13 @@ if exec_obs_publisher_did or exec_all :
         """)
     conn.commit()
     logMe("Commit obs_publisher_did [OK]")
-
+    
+    
+# ############## 6_obs_creator_name ############## :
+if exec_obs_creator_name or exec_all :
+    cur.execute("""
+        select
+        """)
 
 
 
