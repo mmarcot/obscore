@@ -40,8 +40,34 @@ def formatPourBDD(ch):
     ch = ch.replace("/", "_")
     ch = ch.replace("A+A", "AA")
     
-    return ch    
-    
+    return ch  
+
+
+def enleverExtension(ch):
+    """Fonction qui permet d'enlever l'extension d'une nom de fichier FITS"""
+    l = ch.lower().split('.')
+    print(l)
+    ind = -1
+    try :
+        ind = l.index("fit")
+    except ValueError :
+        try :
+            ind = l.index("fits")
+        except ValueError :
+            pass
+        
+    if ind != -1 :
+        ch = ""
+        for e in l :
+            if e == "fit" or e == "fits" :
+                break
+            ch = ch + "." + e
+            
+        return ch[1:]
+    else :
+        return ch
+        
+        
     
     
 
