@@ -46,7 +46,6 @@ def formatPourBDD(ch):
 def enleverExtension(ch):
     """Fonction qui permet d'enlever l'extension d'une nom de fichier FITS"""
     l = ch.lower().split('.')
-    print(l)
     ind = -1
     try :
         ind = l.index("fit")
@@ -81,79 +80,122 @@ except :
 
 cur = conn.cursor()
 
+# choisir les étapes à executer :
+exec_all = False
+exec_vider = False
+exec_insert = False
+exec_obs_collection = False
+exec_dataproduct_type = False
+exec_obs_id = False
+exec_obs_publisher_did = True
+
+
 # on vide la BDD :
-cur.execute("DELETE FROM obscore;")
+if exec_vider or exec_all :
+    cur.execute("DELETE FROM obscore;")
 
 
 # ############## 1_insert.sql ############## :
-f = open(os.path.join("sql", "1_insert.sql"))
-liste_req = epurer(f.read()).split(";")
-for req in liste_req[:-1] :
-    logMe(req, False)
-    cur.execute(req)
-f.close()
-conn.commit()
-logMe("Commit insert [OK]")
+if exec_insert or exec_all :
+    f = open(os.path.join("sql", "1_insert.sql"))
+    liste_req = epurer(f.read()).split(";")
+    for req in liste_req[:-1] :
+        logMe(req, False)
+        cur.execute(req)
+    f.close()
+    conn.commit()
+    logMe("Commit insert [OK]")
 
 
 # ############## 2_obs_collection ############## :
-f = open(os.path.join("sql", "2_obs_collection.sql"))
-content = f.read()
-logMe(content, False)
-cur.execute(content)
-f.close()
-conn.commit()
-logMe("Commit obs_collection [OK]")
+
+if exec_obs_collection or exec_all :
+    f = open(os.path.join("sql", "2_obs_collection.sql"))
+    content = f.read()
+    logMe(content, False)
+    cur.execute(content)
+    f.close()
+    conn.commit()
+    logMe("Commit obs_collection [OK]")
 
 
 # ############## 3_dataproduct_type ############## :
 
-# construction de la liste des catalogues contenant des cubes :
-cur.execute("""
-    select name_class
-    from saada_metaclass_image
-    where name_origin LIKE 'NAXIS_'
-    group by name_class
-    having count(*) > 2;
-    """)
-liste_cube_tmp = cur.fetchall()
-liste_cube = []
-for i in range(len(liste_cube_tmp)) :
-    liste_cube.append(formatPourVizier(liste_cube_tmp[i][0])[3:])
+if exec_dataproduct_type or exec_all :
+    # construction de la liste des catalogues contenant des cubes :
+    cur.execute("""
+        select name_class
+        from saada_metaclass_image
+        where name_origin LIKE 'NAXIS_'
+        group by name_class
+        having count(*) > 2;
+        """)
+    liste_cube_tmp = cur.fetchall()
+    liste_cube = []
+    for i in range(len(liste_cube_tmp)) :
+        liste_cube.append(formatPourVizier(liste_cube_tmp[i][0])[3:])
+        
+    # construction de la liste de tous les catalogues :
+    cur.execute("select distinct obs_collection from obscore;")
+    liste_all_tmp = cur.fetchall()
+    liste_all = []
+    for i in range(len(liste_all_tmp)) :
+        liste_all.append(liste_all_tmp[i][0])
     
-# construction de la liste de tous les catalogues :
-cur.execute("select distinct obs_collection from obscore;")
-liste_all_tmp = cur.fetchall()
-liste_all = []
-for i in range(len(liste_all_tmp)) :
-    liste_all.append(liste_all_tmp[i][0])
-
-# pour chaque catalogue on met si il contient des cubes ou
-# des images :
-for e in liste_all :
-    if e in liste_cube :
-        req = """
-            update obscore
-            set dataproduct_type = 'cube'
-            where obs_collection LIKE '{}'
-             """.format(e)
-        logMe(req, False)
-        cur.execute(req)
-    else :
-        req = """
-            update obscore
-            set dataproduct_type = 'image'
-            where obs_collection LIKE '{}'
-             """.format(e)
-        logMe(req, False)
-        cur.execute(req)
-
-conn.commit()
-logMe("Commit dataproduct_type [OK]")
+    # pour chaque catalogue on met si il contient des cubes ou
+    # des images :
+    for e in liste_all :
+        if e in liste_cube :
+            req = """
+                update obscore
+                set dataproduct_type = 'cube'
+                where obs_collection LIKE '{}'
+                 """.format(e)
+            logMe(req, False)
+            cur.execute(req)
+        else :
+            req = """
+                update obscore
+                set dataproduct_type = 'image'
+                where obs_collection LIKE '{}'
+                 """.format(e)
+            logMe(req, False)
+            cur.execute(req)
+    
+    conn.commit()
+    logMe("Commit dataproduct_type [OK]")
 
 
 
-logMe("Base de donnée correctement chargée")
+# ############## 4_obs_id ############## :
+if exec_obs_id or exec_all :
+    cur.execute("""
+        select oidsaada, filename
+        from saada_loaded_file
+        """)
+    res = cur.fetchall()
+    
+    for tu in res :
+        cur.execute("update obscore set obs_id='" + enleverExtension(tu[1]) + 
+                    "' where obscore.oidsaada=" + str(tu[0]) + ";")
+    
+    conn.commit()
+    logMe("Commit obs_id [OK]")
+
+
+# ############## 5_obs_publisher_did ############## :
+if exec_obs_publisher_did or exec_all :
+    cur.execute("""
+        update obscore
+        set obs_publisher_did = 'ivo://cds/vizier/' || obs_id;
+        """)
+    conn.commit()
+    logMe("Commit obs_publisher_did [OK]")
+
+
+
+
+logMe("Table obscore correctement chargée")
 
 
 
