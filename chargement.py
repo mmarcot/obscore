@@ -88,7 +88,7 @@ exec_obs_collection = False
 exec_dataproduct_type = False
 exec_obs_id = False
 exec_obs_publisher_did = False
-exec_obs_creator_name = True
+exec_obs_creator_name = False
 
 
 # chargement de la liste des collections (.._image) et des classes (imgj_aa_ ..) :
@@ -112,12 +112,14 @@ if exec_vider or exec_all :
 
 # ############## 1_insert.sql ############## :
 if exec_insert or exec_all :
-    f = open(os.path.join("sql", "1_insert.sql"))
-    liste_req = epurer(f.read()).split(";")
-    for req in liste_req[:-1] :
-        logMe(req, False)
-        cur.execute(req)
-    f.close()
+    req = """
+        insert into obscore(oidsaada, sky_pixel_csa, s_ra, s_dec, access_url, s_region, s_fov)
+            select oidsaada, sky_pixel_csa, pos_ra_csa, pos_dec_csa, product_url_csa, shape_csa, (size_alpha_csa+size_delta_csa)/2 
+            from {table};
+        """
+    for collec_image in liste_collec :
+        logMe(req.format(table=collec_image), False)
+        cur.execute(req.format(table=collec_image))
     conn.commit()
     logMe("Commit insert [OK]")
 
@@ -125,11 +127,15 @@ if exec_insert or exec_all :
 # ############## 2_obs_collection ############## :
 
 if exec_obs_collection or exec_all :
-    f = open(os.path.join("sql", "2_obs_collection.sql"))
-    content = f.read()
-    logMe(content, False)
-    cur.execute(content)
-    f.close()
+    req = """
+        update obscore
+        set obs_collection = replace(replace((select collection
+        from saada_loaded_file
+        where obscore.oidsaada = saada_loaded_file.oidsaada),
+        '_', '/'), 'AA', 'A+A');
+        """
+    logMe(req, False)
+    cur.execute(req)
     conn.commit()
     logMe("Commit obs_collection [OK]")
 
