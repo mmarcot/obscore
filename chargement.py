@@ -65,6 +65,33 @@ def enleverExtension(ch):
         return ch[1:]
     else :
         return ch
+    
+    
+def getListeClassesAvecLaColonne(curseur, nom_colonne):
+    """Fonction qui à partir d'un nom de colonne renvoie l'ensemble des
+    tables qui contiennent une telle colonne"""
+    curseur.execute("""
+        select name_coll 
+        from saada_metaclass_image 
+        where name_attr like '{}'
+        """.format(nom_colonne))
+    res = curseur.fetchall();
+    ls_name_class = []
+    for e in res :
+        ls_name_class.append(e[0].lower())
+        
+    return ls_name_class
+
+
+def getContenuColonne(curseur, table, nom_colonne):
+    """Fonction qui récupère l'oidsaada + le contenu d'une colonne et qui 
+    le retourne sous forme de liste de tuples
+    [(oidsaada, contenu), (oidsaada, contenu), ... (oidsaada, contenu)]"""
+     
+    curseur.execute("""
+        select oidsaada, {}
+        from {};""".format(nom_colonne, table))
+    return curseur.fetchall()
         
         
     
@@ -81,14 +108,14 @@ except :
 cur = conn.cursor()
 
 # choisir les étapes à executer :
-exec_all = True
+exec_all = False
 exec_vider = False
 exec_insert = False
 exec_obs_collection = False
 exec_dataproduct_type = False
 exec_obs_id = False
 exec_obs_publisher_did = False
-exec_obs_creator_name = False
+exec_obs_creator_name = True
 
 
 # chargement de la liste des collections (.._image) et des classes (imgj_aa_ ..) :
@@ -217,44 +244,18 @@ if exec_obs_publisher_did or exec_all :
     
 # ############## 6_obs_creator_name ############## :
 if exec_obs_creator_name or exec_all :
-    res = []
-    
-    # on charge une liste contenant l'ensemble des tables qui contiennent 
-    # une colonne _origin :
-    cur.execute("""
-        select name_coll 
-        from saada_metaclass_image 
-        where name_attr like '_origin'
-        """)
-    res_ori = cur.fetchall();
-    ls_name_class_ori = []
-    for e in res_ori :
-        ls_name_class_ori.append(e[0].lower())
-    
-    # ... pareil pour la colonne _creator :
-    cur.execute("""
-        select name_coll 
-        from saada_metaclass_image 
-        where name_attr like '_creator'
-        """)
-    res_crea = cur.fetchall();
-    ls_name_class_crea = []
-    for e in res_crea :
-        ls_name_class_crea.append(e[0].lower())
+
+    ls_name_class_ori = getListeClassesAvecLaColonne(cur, "_origin")
+    ls_name_class_crea = getListeClassesAvecLaColonne(cur, "_creator")
     
     # on cherche le contenu de ces colonnes :
+    res = []
     for classe in liste_classes :
         if classe[3:] in ls_name_class_ori :
-            cur.execute("""
-                select oidsaada, _origin
-                from """ + classe + ";")
-            res += cur.fetchall()
+            res += getContenuColonne(cur, classe, "_origin")
     
         if classe[3:] in ls_name_class_crea :
-            cur.execute("""
-                select oidsaada, _creator
-                from """ + classe + ";")
-            res += cur.fetchall()
+            res += getContenuColonne(cur, classe, "_creator")
     
     # puis on l'insert dans notre table obscore :
     for tu in res :
