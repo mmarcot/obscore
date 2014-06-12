@@ -3,7 +3,6 @@
 
 import psycopg2
 import datetime
-import os.path
 
 
 def logMe(ch, display=True):
@@ -92,9 +91,23 @@ def getContenuColonne(curseur, table, nom_colonne):
         select oidsaada, {}
         from {};""".format(nom_colonne, table))
     return curseur.fetchall()
-        
-        
+
+
+def calculerJours(p_date):
+    """Fonction qui calcul le nombre de jours entre la date passée en paramêtre et la 
+    date repère
+    Le paramètre doit etre de la classe datetime
+    """
+    date_repere = datetime.datetime(2000,1,1)
+    duree = p_date - date_repere
     
+    return (duree.days + (duree.seconds / (60*60*24)))
+    
+
+        
+        
+
+
     
 
 
@@ -115,7 +128,8 @@ exec_obs_collection = False
 exec_dataproduct_type = False
 exec_obs_id = False
 exec_obs_publisher_did = False
-exec_obs_creator_name = True
+exec_obs_creator_name = False
+exec_t_min = True
 
 
 # chargement de la liste des collections (.._image) et des classes (imgj_aa_ ..) :
@@ -245,6 +259,7 @@ if exec_obs_publisher_did or exec_all :
 # ############## 6_obs_creator_name ############## :
 if exec_obs_creator_name or exec_all :
 
+    # on cherche la liste des classes Saada contenant la colonne x :
     ls_name_class_ori = getListeClassesAvecLaColonne(cur, "_origin")
     ls_name_class_crea = getListeClassesAvecLaColonne(cur, "_creator")
     
@@ -264,6 +279,39 @@ if exec_obs_creator_name or exec_all :
     
     conn.commit()
     logMe("Commit obs_creator_name [OK]")
+
+
+
+# ################# 7_t_min ################# :
+
+if exec_t_min or exec_all :
+    ls_date = getListeClassesAvecLaColonne(cur, "_date")
+    ls_mjd = getListeClassesAvecLaColonne(cur, "_mjd")
+    ls_jd = getListeClassesAvecLaColonne(cur, "_jd")
+    
+    # on cherche le contenu de ces colonnes :
+    res_date, res_mjd, res_jd = [], [], []
+    for classe in liste_classes :
+        if classe[3:] in ls_date :
+            res_date += getContenuColonne(cur, classe, "_date")
+    
+        if classe[3:] in ls_mjd :
+            res_mjd += getContenuColonne(cur, classe, "_mjd")
+        
+        if classe[3:] in ls_jd :
+            res_jd += getContenuColonne(cur, classe, "_jd")
+            
+            
+    
+    
+    conn.commit()
+    logMe("Commit t_min [OK]")
+            
+    
+
+
+
+
 
 
 
