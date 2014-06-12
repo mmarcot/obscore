@@ -1,6 +1,7 @@
 Le script fonctionne UNIQUEMENT si : 
   - une collection = un classe Saada
   - la classe à le meme nom que la collection excepté qu'elle est précédée des 3 lettres 'img'
+  - psycopg2 et python-dateutil sont correctement installés
 
 
 Le script chargement.py à besoin pour charger la table obscore :

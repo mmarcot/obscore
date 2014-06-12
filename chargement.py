@@ -3,6 +3,7 @@
 
 import psycopg2
 import datetime
+import dateutil
 
 
 def logMe(ch, display=True):
@@ -300,6 +301,7 @@ if exec_t_min or exec_all :
         
         if classe[3:] in ls_jd :
             res_jd += getContenuColonne(cur, classe, "_jd")
+            
             
             
     
