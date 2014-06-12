@@ -130,7 +130,8 @@ exec_dataproduct_type = False
 exec_obs_id = False
 exec_obs_publisher_did = False
 exec_obs_creator_name = False
-exec_t_min = True
+exec_t_min = False
+exec_t_exposure_time = True
 
 
 # chargement de la liste des collections (.._image) et des classes (imgj_aa_ ..) :
@@ -152,7 +153,9 @@ if exec_vider or exec_all :
     cur.execute("DELETE FROM obscore;")
 
 
-# ############## 1_insert.sql ############## :
+
+# ############## 1_insert ############## :
+
 if exec_insert or exec_all :
     req = """
         insert into obscore(oidsaada, sky_pixel_csa, s_ra, s_dec, access_url, s_region, s_fov)
@@ -164,6 +167,7 @@ if exec_insert or exec_all :
         cur.execute(req.format(table=collec_image))
     conn.commit()
     logMe("Commit insert [OK]")
+
 
 
 # ############## 2_obs_collection ############## :
@@ -180,6 +184,7 @@ if exec_obs_collection or exec_all :
     cur.execute(req)
     conn.commit()
     logMe("Commit obs_collection [OK]")
+
 
 
 # ############## 3_dataproduct_type ############## :
@@ -231,6 +236,7 @@ if exec_dataproduct_type or exec_all :
 
 
 # ############## 4_obs_id ############## :
+
 if exec_obs_id or exec_all :
     res = []
     cur.execute("""
@@ -247,7 +253,9 @@ if exec_obs_id or exec_all :
     logMe("Commit obs_id [OK]")
 
 
+
 # ############## 5_obs_publisher_did ############## :
+
 if exec_obs_publisher_did or exec_all :
     cur.execute("""
         update obscore
@@ -257,7 +265,9 @@ if exec_obs_publisher_did or exec_all :
     logMe("Commit obs_publisher_did [OK]")
     
     
+    
 # ############## 6_obs_creator_name ############## :
+
 if exec_obs_creator_name or exec_all :
 
     # on cherche la liste des classes Saada contenant la colonne x :
@@ -285,6 +295,8 @@ if exec_obs_creator_name or exec_all :
 
 # ################# 7_t_min ################# :
 
+# TODO regrouper les '_date' par catalogue pour savoir si c'est du JJ/MM/YY ou MM/JJ/YY
+
 if exec_t_min or exec_all :
     ls_date = getListeClassesAvecLaColonne(cur, "_date")
     ls_mjd = getListeClassesAvecLaColonne(cur, "_mjd")
@@ -295,10 +307,8 @@ if exec_t_min or exec_all :
     for classe in liste_classes :
         if classe[3:] in ls_date :
             res_date += getContenuColonne(cur, classe, "_date")
-    
         if classe[3:] in ls_mjd :
             res_mjd += getContenuColonne(cur, classe, "_mjd")
-        
         if classe[3:] in ls_jd :
             res_jd += getContenuColonne(cur, classe, "_jd")
             
@@ -317,13 +327,33 @@ if exec_t_min or exec_all :
             mjd = float(tu[1]) - 2400000.5
             cur.execute("update obscore set t_min ='" + str(mjd) +
                 "' where obscore.oidsaada=" + str(tu[0]) + ";")
-            
-    
-            
-    
-    
     conn.commit()
     logMe("Commit t_min [OK]")
+    
+    
+            
+# ################# 8_t_exptime ################# :
+
+if exec_t_exposure_time or exec_all :
+    ls_expo = getListeClassesAvecLaColonne(cur, "_exposure")
+    
+    res = []
+    for classe in liste_classes :
+        if classe[3:] in ls_expo :
+            res += getContenuColonne(cur, classe, "_exposure")
+            
+    # puis on l'insert dans notre table obscore :
+    for tu in res :
+        if tu[1] :
+            cur.execute("update obscore set t_exptime='" + str(tu[1]) + 
+                        "' where obscore.oidsaada=" + str(tu[0]) + ";")
+    
+    conn.commit()
+    logMe("Commit t_exptime [OK]")
+            
+    
+    
+
             
     
 
