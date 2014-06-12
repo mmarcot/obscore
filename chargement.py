@@ -213,6 +213,8 @@ if exec_obs_publisher_did or exec_all :
 if exec_obs_creator_name or exec_all :
     res = []
     
+    # on charge une liste contenant l'ensemble des tables qui contiennent 
+    # une colonne _origin :
     cur.execute("""
         select name_coll 
         from saada_metaclass_image 
@@ -223,6 +225,7 @@ if exec_obs_creator_name or exec_all :
     for e in res_ori :
         ls_name_class_ori.append(e[0].lower())
     
+    # ... pareil pour la colonne _creator :
     cur.execute("""
         select name_coll 
         from saada_metaclass_image 
@@ -233,7 +236,7 @@ if exec_obs_creator_name or exec_all :
     for e in res_crea :
         ls_name_class_crea.append(e[0].lower())
     
-    
+    # on cherche le contenu de ces colonnes :
     for classe in liste_classes :
         if classe[3:] in ls_name_class_ori :
             cur.execute("""
@@ -246,7 +249,8 @@ if exec_obs_creator_name or exec_all :
                 select oidsaada, _creator
                 from """ + classe + ";")
             res += cur.fetchall()
-            
+    
+    # puis on l'insert dans notre table obscore :
     for tu in res :
         cur.execute("update obscore set obs_creator_name='" + str(tu[1]) + 
                     "' where obscore.oidsaada=" + str(tu[0]) + ";")
