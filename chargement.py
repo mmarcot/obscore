@@ -3,7 +3,7 @@
 
 import psycopg2
 import datetime
-import dateutil
+import dateutil.parser
 
 
 def logMe(ch, display=True):
@@ -99,7 +99,7 @@ def calculerJours(p_date):
     date repère
     Le paramètre doit etre de la classe datetime
     """
-    date_repere = datetime.datetime(2000,1,1)
+    date_repere = datetime.datetime(1858,11,17) # MJD : 17 nov 1858 à 0h00 
     duree = p_date - date_repere
     
     return (duree.days + (duree.seconds / (60*60*24)))
@@ -111,15 +111,15 @@ def calculerJours(p_date):
 
     
 
-
+# connexion à la BDD :
 try :
     conn = psycopg2.connect("dbname='VizieR' user='postgres' host='localhost' password='reverser'")
     logMe("Connection à la BDD établie")
 except :
     logMe("Erreur lors de la connection à la BDD")
     exit(1)
-
 cur = conn.cursor()
+
 
 # choisir les étapes à executer :
 exec_all = False
@@ -302,7 +302,23 @@ if exec_t_min or exec_all :
         if classe[3:] in ls_jd :
             res_jd += getContenuColonne(cur, classe, "_jd")
             
+    # insertion dans la table obscore :
+    for tu in res_date :
+        if tu[1] :
+            date_formate = dateutil.parser.parse(tu[1])
+            cur.execute("update obscore set t_min ='" + str(calculerJours(date_formate)) +
+                "' where obscore.oidsaada=" + str(tu[0]) + ";")
+    for tu in res_mjd :
+        if tu[1] :
+            cur.execute("update obscore set t_min ='" + str(tu[1]) +
+                "' where obscore.oidsaada=" + str(tu[0]) + ";")
+    for tu in res_jd :
+        if tu[1] :
+            mjd = float(tu[1]) - 2400000.5
+            cur.execute("update obscore set t_min ='" + str(mjd) +
+                "' where obscore.oidsaada=" + str(tu[0]) + ";")
             
+    
             
     
     

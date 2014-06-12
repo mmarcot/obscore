@@ -1,7 +1,17 @@
+##########################################################################
+##                                                                      ##
+##                   CHARGEMENT TABLE OBSCORE                           ##
+##                          script chargment.py                         ##
+##########################################################################
+
+
 Le script fonctionne UNIQUEMENT si : 
   - une collection = un classe Saada
   - la classe à le meme nom que la collection excepté qu'elle est précédée des 3 lettres 'img'
   - psycopg2 et python-dateutil sont correctement installés
+
+
+Le parser de date ne sais pas faire la différence entre une date JJ/MM/YY et une date MM/JJ/YY si les jours sont inférieurs ou égal à 12. Cependant il est possible de lui passer un argument 'dayfirst' de type boolean privilégiant l'une méthode ou l'autre
 
 
 Le script chargement.py à besoin pour charger la table obscore :
