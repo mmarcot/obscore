@@ -123,15 +123,15 @@ cur = conn.cursor()
 
 # choisir les étapes à executer :
 exec_all = False
-exec_vider = False
-exec_insert = False
+exec_vider = True
+exec_insert = True
 exec_obs_collection = False
 exec_dataproduct_type = False
 exec_obs_id = False
 exec_obs_publisher_did = False
 exec_obs_creator_name = False
 exec_t_min = False
-exec_t_exposure_time = True
+exec_t_exposure_time = False
 
 
 # chargement de la liste des collections (.._image) et des classes (imgj_aa_ ..) :
@@ -151,6 +151,8 @@ f_collec.close()
 # on vide la BDD :
 if exec_vider or exec_all :
     cur.execute("DELETE FROM obscore;")
+    conn.commit()
+    logMe("Commit vidage BDD [OK]")
 
 
 
@@ -158,8 +160,8 @@ if exec_vider or exec_all :
 
 if exec_insert or exec_all :
     req = """
-        insert into obscore(oidsaada, sky_pixel_csa, s_ra, s_dec, access_url, s_region, s_fov)
-            select oidsaada, sky_pixel_csa, pos_ra_csa, pos_dec_csa, product_url_csa, shape_csa, (size_alpha_csa+size_delta_csa)/2 
+        insert into obscore(oidsaada, sky_pixel_csa, s_ra, s_dec, access_url, s_region, s_fov, access_format)
+            select oidsaada, sky_pixel_csa, pos_ra_csa, pos_dec_csa, product_url_csa, shape_csa, (size_alpha_csa+size_delta_csa)/2, 'image/fits' 
             from {table};
         """
     for collec_image in liste_collec :
