@@ -5,6 +5,7 @@ import psycopg2
 import datetime
 import dateutil.parser
 import os.path
+from math import sqrt, pow
 
 
 def logMe(ch, display=True):
@@ -133,7 +134,8 @@ exec_obs_publisher_did = False
 exec_obs_creator_name = False
 exec_t_min = False
 exec_t_exposure_time = False
-exec_access_estsize = True
+exec_access_estsize = False
+exec_s_resolution = True
 
 
 # chargement de la liste des collections (.._image) et des classes (imgj_aa_ ..) :
@@ -379,6 +381,38 @@ if exec_access_estsize or exec_all :
     logMe("Commit access_estsize [OK]")
 
 
+
+# ################# 10_s_resolution ################# :
+
+if exec_s_resolution or exec_all :
+    
+    # on charge la liste 'res' avec l'ensemble des coordonnées de
+    # chaque image :
+    res = []
+    for collec in liste_collec :
+        cur.execute("""
+            select oidsaada, cd1_1_csa, cd1_2_csa, cd2_1_csa, cd2_2_csa
+            from {}""".format(collec))
+        res += cur.fetchall()
+        
+    # on calcul le champs s_resolution :
+    for tu in res :
+        cd1_1 = float(tu[1])
+        cd1_2 = float(tu[2])
+        cd2_1 = float(tu[3])
+        cd2_2 = float(tu[4])
+        
+        s_res = sqrt(pow(cd1_1,2)+pow(cd1_2,2)) + sqrt(pow(cd2_1,2)+pow(cd2_2,2))
+        
+        # .. et on l'insert dans la table obscore :
+        cur.execute("""
+            update obscore
+            set s_resolution = {}
+            where obscore.oidsaada = {}
+            """.format(s_res, tu[0]))
+
+    conn.commit()
+    logMe("Commit s_resolution [OK]")
 
 
 
