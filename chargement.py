@@ -124,7 +124,7 @@ cur = conn.cursor()
 
 
 # choisir les étapes à executer :
-exec_all = True
+exec_all = False
 exec_vider = False
 exec_insert = False
 exec_obs_collection = False
@@ -136,6 +136,7 @@ exec_t_min = False
 exec_t_exposure_time = False
 exec_access_estsize = False
 exec_s_resolution = False
+exec_facility_name = True
 
 
 # chargement de la liste des collections (.._image) et des classes (imgj_aa_ ..) :
@@ -357,7 +358,7 @@ if exec_t_exposure_time or exec_all :
     conn.commit()
     logMe("Commit t_exptime [OK]")
 
-    
+
     
 # ################# 9_access_estsize ################# :
 
@@ -412,6 +413,30 @@ if exec_s_resolution or exec_all :
 
     conn.commit()
     logMe("Commit s_resolution [OK]")
+    
+    
+    
+# ################# 11_facility_name ################# :
+    
+if exec_facility_name or exec_all :
+    ls_telescop = getListeClassesAvecLaColonne(cur, "_telescop")
+    
+    # on cherche le contenu de ces colonnes :
+    res = []
+    for classe in liste_classes :
+        if classe[3:] in ls_telescop :
+            res += getContenuColonne(cur, classe, "_telescop")
+
+            
+    # insertion dans la table obscore :
+    for tu in res :
+        if str(tu[1]) != "None" :
+            cur.execute("update obscore set facility_name='" + str(tu[1]) +
+                "' where obscore.oidsaada=" + str(tu[0]) + ";")
+
+    conn.commit()
+    logMe("Commit facility_name [OK]")
+
 
 
 
