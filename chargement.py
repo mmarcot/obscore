@@ -124,7 +124,7 @@ cur = conn.cursor()
 
 
 # choisir les étapes à executer :
-exec_all = False
+exec_all = True
 exec_vider = False
 exec_insert = False
 exec_obs_collection = False
@@ -135,7 +135,7 @@ exec_obs_creator_name = False
 exec_t_min = False
 exec_t_exposure_time = False
 exec_access_estsize = False
-exec_s_resolution = True
+exec_s_resolution = False
 
 
 # chargement de la liste des collections (.._image) et des classes (imgj_aa_ ..) :
@@ -373,7 +373,6 @@ if exec_access_estsize or exec_all :
     
     # puis on insert ligne par ligne dans obscore :
     for tu in res :
-        if tu[1] :
             cur.execute("update obscore set access_estsize='" + str(os.path.getsize(tu[1])) +
                         "' where obscore.oidsaada=" + str(tu[0]))
 
