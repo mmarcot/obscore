@@ -136,7 +136,8 @@ exec_t_min = False
 exec_t_exposure_time = False
 exec_access_estsize = False
 exec_s_resolution = False
-exec_facility_name = True
+exec_facility_name = False
+exec_instrument_name = True
 
 
 # chargement de la liste des collections (.._image) et des classes (imgj_aa_ ..) :
@@ -436,6 +437,35 @@ if exec_facility_name or exec_all :
 
     conn.commit()
     logMe("Commit facility_name [OK]")
+
+
+
+# ################# 12_instrument_name ################# :
+
+if exec_instrument_name or exec_all :
+    ls_instru = getListeClassesAvecLaColonne(cur, "_instru")
+    ls_instrum = getListeClassesAvecLaColonne(cur, "_instrum")
+    ls_instrume = getListeClassesAvecLaColonne(cur, "_instrume")
+    
+    # on cherche le contenu de ces colonnes :
+    res = []
+    for classe in liste_classes :
+        if classe[3:] in ls_instru :
+            res += getContenuColonne(cur, classe, "_instru")
+        if classe[3:] in ls_instrum :
+            res += getContenuColonne(cur, classe, "_instrum")
+        if classe[3:] in ls_instrume :
+            res += getContenuColonne(cur, classe, "_instrume")
+            
+    # insertion dans la table obscore :
+    for tu in res :
+        if tu[1] :
+            cur.execute("update obscore set instrument_name='" + tu[1] +
+                "' where obscore.oidsaada=" + str(tu[0]) + ";")
+
+    conn.commit()
+    logMe("Commit instrument_name [OK]")
+
 
 
 
