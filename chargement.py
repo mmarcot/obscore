@@ -4,6 +4,7 @@
 import psycopg2
 import datetime
 import dateutil.parser
+import os.path
 
 
 def logMe(ch, display=True):
@@ -123,8 +124,8 @@ cur = conn.cursor()
 
 # choisir les étapes à executer :
 exec_all = False
-exec_vider = True
-exec_insert = True
+exec_vider = False
+exec_insert = False
 exec_obs_collection = False
 exec_dataproduct_type = False
 exec_obs_id = False
@@ -132,6 +133,7 @@ exec_obs_publisher_did = False
 exec_obs_creator_name = False
 exec_t_min = False
 exec_t_exposure_time = False
+exec_access_estsize = True
 
 
 # chargement de la liste des collections (.._image) et des classes (imgj_aa_ ..) :
@@ -352,14 +354,29 @@ if exec_t_exposure_time or exec_all :
     
     conn.commit()
     logMe("Commit t_exptime [OK]")
-            
+
     
     
+# ################# 9_access_estsize ################# :
 
-            
+if exec_access_estsize or exec_all :    
     
+    # on recupère l'oidsaada + l'access url de toutes le lignes de la table obscore :
+    res = []
+    cur.execute("""
+        select oidsaada, access_url
+        from obscore
+        """)
+    res = cur.fetchall()
+    
+    # puis on insert ligne par ligne dans obscore :
+    for tu in res :
+        if tu[1] :
+            cur.execute("update obscore set access_estsize='" + str(os.path.getsize(tu[1])) +
+                        "' where obscore.oidsaada=" + str(tu[0]))
 
-
+    conn.commit()
+    logMe("Commit access_estsize [OK]")
 
 
 
