@@ -11,9 +11,6 @@ Le script fonctionne UNIQUEMENT si :
   - psycopg2 et python-dateutil sont correctement installés
 
 
-Le parser de date ne sais pas faire la différence entre une date JJ/MM/YY et une date MM/JJ/YY si les jours sont inférieurs ou égal à 12. Cependant il est possible de lui passer un argument 'dayfirst' de type boolean privilégiant l'une méthode ou l'autre
-
-
 Le script chargement.py à besoin pour charger la table obscore :
 
 - du fichier nommé 'liste_classes_db.txt' contenant le listes de toutes les classes de Saada (séparé par des retours à la ligne)

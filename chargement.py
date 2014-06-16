@@ -124,7 +124,7 @@ cur = conn.cursor()
 
 
 # choisir les étapes à executer :
-exec_all = False
+exec_all = True
 exec_vider = False
 exec_insert = False
 exec_obs_collection = False
@@ -303,8 +303,6 @@ if exec_obs_creator_name or exec_all :
 
 # ################# 7_t_min ################# :
 
-# TODO regrouper les '_date' par catalogue pour savoir si c'est du JJ/MM/YY ou MM/JJ/YY
-
 if exec_t_min or exec_all :
     ls_date = getListeClassesAvecLaColonne(cur, "_date")
     ls_mjd = getListeClassesAvecLaColonne(cur, "_mjd")
@@ -314,16 +312,40 @@ if exec_t_min or exec_all :
     res_date, res_mjd, res_jd = [], [], []
     for classe in liste_classes :
         if classe[3:] in ls_date :
-            res_date += getContenuColonne(cur, classe, "_date")
+            res_1_classe = []
+            res_1_classe += getContenuColonne(cur, classe, "_date") 
+            
+            # determination dayfirst ou non (par classe) :
+            jour_en_premier = False
+            for tu in res_1_classe :
+                nb = -1
+                try :
+                    nb = int(tu[1].strip()[:2])
+                except :
+                    pass
+                if nb != -1 and nb > 12 :
+                    jour_en_premier = True
+            
+            # on construit la liste res_date contenant pour chaque enregistrement 
+            # un tuple de la forme : 
+            # (oidsaada, date_str, dayfirst_bool)
+            for tu in res_1_classe :
+                res_date.append( (tu + (jour_en_premier,) )) # concat tuple
+
+                         
         if classe[3:] in ls_mjd :
             res_mjd += getContenuColonne(cur, classe, "_mjd")
+            
         if classe[3:] in ls_jd :
             res_jd += getContenuColonne(cur, classe, "_jd")
+            
+
+            
             
     # insertion dans la table obscore :
     for tu in res_date :
         if tu[1] :
-            date_formate = dateutil.parser.parse(tu[1])
+            date_formate = dateutil.parser.parse(tu[1], dayfirst=tu[2])
             cur.execute("update obscore set t_min ='" + str(calculerJours(date_formate)) +
                 "' where obscore.oidsaada=" + str(tu[0]) + ";")
     for tu in res_mjd :
