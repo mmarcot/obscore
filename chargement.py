@@ -542,18 +542,21 @@ if exec_em_min_et_max or exec_all :
         if ctype3 and ctype3.upper() == "FREQ" :
             em_min = crval3 + (1-crpix3) * cdelt3
             em_max = crval3 + (naxis3-crpix3) * cdelt3
+            cur.execute("update obscore set em_min='" + str(em_min) +
+                        "' where obscore.oidsaada=" + str(oidsaada) + ";")
+            cur.execute("update obscore set em_max='" + str(em_max) +
+                        "' where obscore.oidsaada=" + str(oidsaada) + ";")
         
-        elif ctype3 and ctype3.lower() not in ["unknown", "none"] : # VELO
+        elif ctype3 and ctype3.lower() != "unknown" and ctype3.lower() != "none" : # VELO
             v1 = crval3 + (1-crpix3) * cdelt3
             vfin = crval3 + (naxis3-crpix3) * cdelt3
-            c = 300000
+            c = 300000000
             em_min = v1/c * freq
             em_max = vfin/c * freq
-                     
-        cur.execute("update obscore set em_min='" + str(em_min) +
-                    "' where obscore.oidsaada=" + str(oidsaada) + ";")
-        cur.execute("update obscore set em_max='" + str(em_max) +
-                    "' where obscore.oidsaada=" + str(oidsaada) + ";")
+            cur.execute("update obscore set em_min='" + str(em_min+freq) +
+                        "' where obscore.oidsaada=" + str(oidsaada) + ";")
+            cur.execute("update obscore set em_max='" + str(em_max+freq) +
+                        "' where obscore.oidsaada=" + str(oidsaada) + ";")
             
             
 
