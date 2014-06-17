@@ -528,26 +528,42 @@ if exec_em_min_et_max or exec_all :
             
     # insertion dans la table obscore :
     for tu in res :
-        ctype3 = tu[6] # text
-        
-        if ctype3 == "FREQ" :
+        try :
             oidsaada = tu[0]
             freq = float(tu[1])
             cdelt3 = float(tu[2])
             crpix3 = float(tu[3])
             crval3 = float(tu[4])
             naxis3 = int(tu[5])
-            
+            ctype3 = tu[6] # text
+        except TypeError :
+            continue
+        
+        if ctype3 and ctype3.upper() == "FREQ" :
             em_min = crval3 + (1-crpix3) * cdelt3
             em_max = crval3 + (naxis3-crpix3) * cdelt3
+        
+        elif ctype3 and ctype3.lower() not in ["unknown", "none"] : # VELO
+            v1 = crval3 + (1-crpix3) * cdelt3
+            vfin = crval3 + (naxis3-crpix3) * cdelt3
+            c = 300000
+            em_min = v1/c * freq
+            em_max = vfin/c * freq
+                     
+        cur.execute("update obscore set em_min='" + str(em_min) +
+                    "' where obscore.oidsaada=" + str(oidsaada) + ";")
+        cur.execute("update obscore set em_max='" + str(em_max) +
+                    "' where obscore.oidsaada=" + str(oidsaada) + ";")
             
-            cur.execute("update obscore set em_min='" + str(em_min) +
-                    "' where obscore.oidsaada=" + str(oidsaada) + ";")
-            cur.execute("update obscore set em_max='" + str(em_max) +
-                    "' where obscore.oidsaada=" + str(oidsaada) + ";")
+            
 
     conn.commit()
     logMe("Commit em_min et em_max [OK]")
+
+
+
+
+
 
 
 
