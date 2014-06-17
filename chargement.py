@@ -96,19 +96,29 @@ def getContenuColonne(curseur, table, nom_colonne):
     return curseur.fetchall()
 
 
-def getContenuColonnes(curseur, ls_nom_colonne):
-    """Fonction qui récupère l'oidsaada + le contenu des colonnes et qui 
-    le retourne sous forme de liste de tuples
-    [(oidsaada, contenu), (oidsaada, contenu), ... (oidsaada, contenu)]"""
+def getContenuColonnes(curseur, ls_nom_colonne, *cols):
+    """Fonction qui verifie l'existance des colonnes dans la liste des noms de colonnes
+    et qui retourne son contenu
+    L'attribut *cols permet de rajouter des noms de colonne dans le select
+    """
     res = []
     for nom_colonne in ls_nom_colonne :
         ls_cl = getListeClassesAvecLaColonne(curseur, nom_colonne)
+        
+        # on construit le nom de classe :
         for cl in ls_cl :
             if cl[:3] != "img" :
-                cl = "img" +cl
+                cl = "img" + cl
+            
+            # construction du contenu du select :    
+            select_content = "oidsaada, " + nom_colonne
+            for c in cols :
+                select_content += (", " + c)
+                
             curseur.execute("""
-                select oidsaada, {}
-                from {};""".format(nom_colonne, cl))
+                select {}
+                from {};""".format(select_content, cl))
+            
             res += curseur.fetchall()
     return res
     
@@ -155,8 +165,8 @@ exec_t_exposure_time = False
 exec_access_estsize = False
 exec_s_resolution = False
 exec_facility_name = False
-exec_instrument_name = False
-exec_em_min_et_max = True
+exec_instrument_name = True
+exec_em_min_et_max = False
 
 
 # chargement de la liste des collections (.._image) et des classes (imgj_aa_ ..) :
@@ -485,20 +495,8 @@ if exec_facility_name or exec_all :
 # ################# 12_instrument_name ################# :
 
 if exec_instrument_name or exec_all :
-#     ls_instru = getListeClassesAvecLaColonne(cur, "_instru")
-#     ls_instrum = getListeClassesAvecLaColonne(cur, "_instrum")
-#     ls_instrume = getListeClassesAvecLaColonne(cur, "_instrume")
-#     
-#     # on cherche le contenu de ces colonnes :
-    res = getContenuColonnes(cur, ["_instru", "_instrum", "_instrume"])
-#    for classe in liste_classes :
-#         if classe[3:] in ls_instru + ls_instrum + ls_instrume:
-#             res += getContenuColonne(cur, classe, "_instru")
-#         if classe[3:] in ls_instrum :
-#             res += getContenuColonne(cur, classe, "_instrum")
-#         if classe[3:] in ls_instrume :
-#             res += getContenuColonne(cur, classe, "_instrume")
-             
+    res = getContenuColonnes(cur, ["_instru", "_instrum", "_instrume"] )
+
     # insertion dans la table obscore :
     for tu in res :
         if tu[1] :
@@ -513,38 +511,13 @@ if exec_instrument_name or exec_all :
 # ################# 13 em_min et em_max ################# :
 
 if exec_em_min_et_max or exec_all :
-    ls_restfreq = getListeClassesAvecLaColonne(cur, "_restfreq")
-    ls_restfrq = getListeClassesAvecLaColonne(cur, "_restfrq")
-    ls_freq = getListeClassesAvecLaColonne(cur, "_freq")
-    ls_frequ = getListeClassesAvecLaColonne(cur, "_frequ")
-    ls_freque = getListeClassesAvecLaColonne(cur, "_freque")
-    ls_frequen = getListeClassesAvecLaColonne(cur, "_frequen")
-    ls_frequenc = getListeClassesAvecLaColonne(cur, "_frequenc")
-
-    liste_classes_3_axes = getListeClassesAvecLaColonne(cur, "_cdelt3")
-    # on cherche le contenu de ces colonnes :
-    res = []
-    for classe in liste_classes_3_axes :
-        classe = "img" + classe
-        if classe[3:] in ls_restfreq :
-            res += getContenuColonne(cur, classe, "_restfreq")
-        if classe[3:] in ls_restfrq :
-            res += getContenuColonne(cur, classe, "_restfrq")
-        if classe[3:] in ls_freq :
-            res += getContenuColonne(cur, classe, "_freq")
-        if classe[3:] in ls_frequ :
-            res += getContenuColonne(cur, classe, "_frequ")
-        if classe[3:] in ls_freque :
-            res += getContenuColonne(cur, classe, "_freque")
-        if classe[3:] in ls_frequen :
-            res += getContenuColonne(cur, classe, "_frequen")
-        if classe[3:] in ls_frequenc :
-            res += getContenuColonne(cur, classe, "_frequenc")
+    res = getContenuColonnes(cur, ["_restfreq", "_restfrq", "_freq", "_frequ", "_freque",
+                                   "_frequen", "_frequenc"])
             
     # insertion dans la table obscore :
     for tu in res :
         if tu[1] :
-            cur.execute("update obscore set instrument_name='" + tu[1] +
+            cur.execute("update obscore set ???='" + tu[1] +
                 "' where obscore.oidsaada=" + str(tu[0]) + ";")
 
     conn.commit()
