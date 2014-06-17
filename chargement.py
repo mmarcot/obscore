@@ -96,17 +96,28 @@ def getContenuColonne(curseur, table, nom_colonne):
     return curseur.fetchall()
 
 
-def getContenuColonnes(curseur, ls_nom_colonne, *cols):
+def getContenuColonnes(curseur, ls_nom_colonne, *cols, only3axes=False):
     """Fonction qui verifie l'existance des colonnes dans la liste des noms de colonnes
     et qui retourne son contenu
     L'attribut *cols permet de rajouter des noms de colonne dans le select
     """
     res = []
+    
+    if only3axes :
+        ls_3_axes = getListeClassesAvecLaColonne(curseur, "_cdelt3")
+        
     for nom_colonne in ls_nom_colonne :
         ls_cl = getListeClassesAvecLaColonne(curseur, nom_colonne)
         
-        # on construit le nom de classe :
         for cl in ls_cl :
+            
+            # on vérifie si la classe en cours a 3 axes 
+            # en cas de flag only3axes :
+            if only3axes :
+                if cl not in ls_3_axes :
+                    continue
+                
+            # on construit le nom de classe :
             if cl[:3] != "img" :
                 cl = "img" + cl
             
@@ -165,8 +176,8 @@ exec_t_exposure_time = False
 exec_access_estsize = False
 exec_s_resolution = False
 exec_facility_name = False
-exec_instrument_name = True
-exec_em_min_et_max = False
+exec_instrument_name = False
+exec_em_min_et_max = True
 
 
 # chargement de la liste des collections (.._image) et des classes (imgj_aa_ ..) :
@@ -511,17 +522,32 @@ if exec_instrument_name or exec_all :
 # ################# 13 em_min et em_max ################# :
 
 if exec_em_min_et_max or exec_all :
-    res = getContenuColonnes(cur, ["_restfreq", "_restfrq", "_freq", "_frequ", "_freque",
-                                   "_frequen", "_frequenc"])
+    res=getContenuColonnes(cur, ["_restfreq", "_restfrq", "_freq", "_frequ", "_freque",
+                                 "_frequen", "_frequenc"], "_cdelt3", "_crpix3", "_crval3",
+                                  "_naxis3", "_ctype3", only3axes=True)
             
     # insertion dans la table obscore :
     for tu in res :
-        if tu[1] :
-            cur.execute("update obscore set ???='" + tu[1] +
-                "' where obscore.oidsaada=" + str(tu[0]) + ";")
+        ctype3 = tu[6] # text
+        
+        if ctype3 == "FREQ" :
+            oidsaada = tu[0]
+            freq = float(tu[1])
+            cdelt3 = float(tu[2])
+            crpix3 = float(tu[3])
+            crval3 = float(tu[4])
+            naxis3 = int(tu[5])
+            
+            em_min = crval3 + (1-crpix3) * cdelt3
+            em_max = crval3 + (naxis3-crpix3) * cdelt3
+            
+            cur.execute("update obscore set em_min='" + str(em_min) +
+                    "' where obscore.oidsaada=" + str(oidsaada) + ";")
+            cur.execute("update obscore set em_max='" + str(em_max) +
+                    "' where obscore.oidsaada=" + str(oidsaada) + ";")
 
     conn.commit()
-    logMe("Commit instrument_name [OK]")
+    logMe("Commit em_min et em_max [OK]")
 
 
 
