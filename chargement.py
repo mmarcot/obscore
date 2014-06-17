@@ -124,7 +124,7 @@ cur = conn.cursor()
 
 
 # choisir les étapes à executer :
-exec_all = True
+exec_all = False
 exec_vider = False
 exec_insert = False
 exec_obs_collection = False
@@ -137,7 +137,8 @@ exec_t_exposure_time = False
 exec_access_estsize = False
 exec_s_resolution = False
 exec_facility_name = False
-exec_instrument_name = True
+exec_instrument_name = False
+exec_em_min_et_max = True
 
 
 # chargement de la liste des collections (.._image) et des classes (imgj_aa_ ..) :
@@ -323,9 +324,10 @@ if exec_t_min or exec_all :
                     nb = int(tu[1].strip()[:2])
                 except :
                     pass
-                if nb != -1 and nb > 12 :
+                if nb > 12 :
                     jour_en_premier = True
-            
+                    break
+                
             # on construit la liste res_date contenant pour chaque enregistrement 
             # un tuple de la forme : 
             # (oidsaada, date_str, dayfirst_bool)
@@ -487,6 +489,19 @@ if exec_instrument_name or exec_all :
 
     conn.commit()
     logMe("Commit instrument_name [OK]")
+
+
+
+# ################# 13 em_min et em_max ################# :
+
+if exec_em_min_et_max or exec_all :
+    ls_restfreq = getListeClassesAvecLaColonne(cur, "_restfreq")
+    ls_restfrq = getListeClassesAvecLaColonne(cur, "_restfrq")
+    ls_freq = getListeClassesAvecLaColonne(cur, "_freq")
+    ls_frequ = getListeClassesAvecLaColonne(cur, "_frequ")
+    ls_freque = getListeClassesAvecLaColonne(cur, "_freque")
+    ls_frequen = getListeClassesAvecLaColonne(cur, "_frequen")
+    ls_frequenc = getListeClassesAvecLaColonne(cur, "_frequenc")
 
 
 
