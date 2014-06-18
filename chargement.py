@@ -171,7 +171,7 @@ exec_dataproduct_type = False
 exec_obs_id = False
 exec_obs_publisher_did = False
 exec_obs_creator_name = False
-exec_t_min = False
+exec_t_min = True
 exec_t_exposure_time = False
 exec_access_estsize = False
 exec_s_resolution = False
@@ -347,9 +347,10 @@ if exec_t_min or exec_all :
     ls_date = getListeClassesAvecLaColonne(cur, "_date")
     ls_mjd = getListeClassesAvecLaColonne(cur, "_mjd")
     ls_jd = getListeClassesAvecLaColonne(cur, "_jd")
+    ls_date_obs = getListeClassesAvecLaColonne(cur, "_date_obs")
     
     # on cherche le contenu de ces colonnes :
-    res_date, res_mjd, res_jd = [], [], []
+    res_date, res_mjd, res_jd, res_date_obs = [], [], [], []
     for classe in liste_classes :
         if classe[3:] in ls_date :
             res_1_classe = []
@@ -380,8 +381,29 @@ if exec_t_min or exec_all :
         if classe[3:] in ls_jd :
             res_jd += getContenuColonne(cur, classe, "_jd")
             
-
+        if classe[3:] in ls_date_obs :
+            res_1_classe = []
+            res_1_classe += getContenuColonne(cur, classe, "_date_obs") 
             
+            # determination dayfirst ou non (par classe) :
+            jour_en_premier = False
+            for tu in res_1_classe :
+                nb = -1
+                try :
+                    nb = int(tu[1].strip()[:2])
+                except :
+                    pass
+                if nb > 12 :
+                    jour_en_premier = True
+                    break
+                
+            # on construit la liste res_date contenant pour chaque enregistrement 
+            # un tuple de la forme : 
+            # (oidsaada, date_str, dayfirst_bool)
+            for tu in res_1_classe :
+                res_date_obs.append( (tu + (jour_en_premier,) )) # concat tuple
+            
+
             
     # insertion dans la table obscore :
     for tu in res_date :
@@ -398,6 +420,19 @@ if exec_t_min or exec_all :
             mjd = float(tu[1]) - 2400000.5
             cur.execute("update obscore set t_min ='" + str(mjd) +
                 "' where obscore.oidsaada=" + str(tu[0]) + ";")
+            
+    for tu in res_date_obs :
+        if tu[1] :
+            try :
+                date_formate2 = dateutil.parser.parse(str(tu[1]), dayfirst=tu[2])
+                cur.execute("update obscore set t_min ='" + str(calculerJours(date_formate2)) +
+                    "' where obscore.oidsaada=" + str(tu[0]) + ";")
+            except TypeError :
+                pass
+            except ValueError :
+                pass
+            
+            
     conn.commit()
     logMe("Commit t_min [OK]")
     
