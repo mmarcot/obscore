@@ -525,6 +525,8 @@ if exec_em_min_et_max or exec_all :
     res=getContenuColonnes(cur, ["_restfreq", "_restfrq", "_freq", "_frequ", "_freque",
                                  "_frequen", "_frequenc"], "_cdelt3", "_crpix3", "_crval3",
                                   "_naxis3", "_ctype3", only3axes=True)
+    
+    c = 300000000 # vitesse de la lumiere en m/s
             
     # insertion dans la table obscore :
     for tu in res :
@@ -542,22 +544,44 @@ if exec_em_min_et_max or exec_all :
         if ctype3 and ctype3.upper() == "FREQ" :
             em_min = crval3 + (1-crpix3) * cdelt3
             em_max = crval3 + (naxis3-crpix3) * cdelt3
+            
+            # conversion frequence => longueur d'onde :
+            if em_min != 0 :
+                em_min = c/em_min
+            if em_max != 0 :
+                em_max = c/em_max
+            
             cur.execute("update obscore set em_min='" + str(em_min) +
                         "' where obscore.oidsaada=" + str(oidsaada) + ";")
             cur.execute("update obscore set em_max='" + str(em_max) +
                         "' where obscore.oidsaada=" + str(oidsaada) + ";")
         
+        
         elif ctype3 and ctype3.lower() != "unknown" and ctype3.lower() != "none" : # VELO
             v1 = crval3 + (1-crpix3) * cdelt3
             vfin = crval3 + (naxis3-crpix3) * cdelt3
-            c = 300000000
             em_min = v1/c * freq
             em_max = vfin/c * freq
-            cur.execute("update obscore set em_min='" + str(em_min+freq) +
+            
+            em_min += freq
+            em_max += freq
+            
+            # conversion frequence => longueur d'onde :
+            if em_min != 0 :
+                em_min = c/em_min
+            if em_max != 0 :
+                em_max = c/em_max
+            
+            cur.execute("update obscore set em_min='" + str(em_min) +
                         "' where obscore.oidsaada=" + str(oidsaada) + ";")
-            cur.execute("update obscore set em_max='" + str(em_max+freq) +
+            cur.execute("update obscore set em_max='" + str(em_max) +
                         "' where obscore.oidsaada=" + str(oidsaada) + ";")
             
+    
+    # requete spécifique catalogue J/ApJS/175/277 Scuba :
+    cur.execute("""update obscore
+        set em_min = 0.00085
+        where obscore.obs_collection = 'J/ApJS/175/277'""")
             
 
     conn.commit()
