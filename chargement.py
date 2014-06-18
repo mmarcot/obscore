@@ -100,6 +100,8 @@ def getContenuColonnes(curseur, ls_nom_colonne, *cols, only3axes=False):
     """Fonction qui verifie l'existance des colonnes dans la liste des noms de colonnes
     et qui retourne son contenu
     L'attribut *cols permet de rajouter des noms de colonne dans le select
+    
+    [(oidsaada, *cols), (oidsaada, *cols), ... (oidsaada, *cols)]
     """
     res = []
     
@@ -171,7 +173,7 @@ exec_dataproduct_type = False
 exec_obs_id = False
 exec_obs_publisher_did = False
 exec_obs_creator_name = False
-exec_t_min = True
+exec_t_min = False
 exec_t_exposure_time = False
 exec_access_estsize = False
 exec_s_resolution = False
@@ -561,18 +563,35 @@ if exec_em_min_et_max or exec_all :
                                  "_frequen", "_frequenc"], "_cdelt3", "_crpix3", "_crval3",
                                   "_naxis3", "_ctype3", only3axes=True)
     
+    # on crée une liste qui contient les 2 colonnes suivantes :
+    ls_cdelt3= getListeClassesAvecLaColonne(cur, "_cdelt3")
+    ls_naxis3= getListeClassesAvecLaColonne(cur, "_naxis3")
+    ls_fusion = []
+    for e in ls_cdelt3 :
+        if e in ls_naxis3 :
+            ls_fusion.append(e)
+    
+    res_all = []
+    for cl in ls_fusion :
+        cl = "img" + cl
+        cur.execute("""
+            select oidsaada, _cdelt3, _crpix3, _crval3, _naxis3, _ctype3
+            from {}
+            """.format(cl))
+        res_all += cur.fetchall()
+    
     c = 300000000 # vitesse de la lumiere en m/s
-            
-    # insertion dans la table obscore :
-    for tu in res :
+    
+    ########### insertion dans la table obscore :
+    # pour ctype3 == "FREQ" :
+    for tu in res_all :
         try :
             oidsaada = tu[0]
-            freq = float(tu[1])
-            cdelt3 = float(tu[2])
-            crpix3 = float(tu[3])
-            crval3 = float(tu[4])
-            naxis3 = int(tu[5])
-            ctype3 = tu[6] # text
+            cdelt3 = float(tu[1])
+            crpix3 = float(tu[2])
+            crval3 = float(tu[3])
+            naxis3 = int(tu[4])
+            ctype3 = tu[5] # text
         except TypeError :
             continue
         
@@ -590,9 +609,22 @@ if exec_em_min_et_max or exec_all :
                         "' where obscore.oidsaada=" + str(oidsaada) + ";")
             cur.execute("update obscore set em_max='" + str(em_max) +
                         "' where obscore.oidsaada=" + str(oidsaada) + ";")
+    
+    
+    # pour ctype3 == VELO :
+    for tu in res :
+        try :
+            oidsaada = tu[0]
+            freq = float(tu[1])
+            cdelt3 = float(tu[2])
+            crpix3 = float(tu[3])
+            crval3 = float(tu[4])
+            naxis3 = int(tu[5])
+            ctype3 = tu[6] # text
+        except TypeError :
+            continue
         
-        
-        elif ctype3 and ctype3.lower() != "unknown" and ctype3.lower() != "none" : # VELO
+        if ctype3 and ctype3.lower() != "unknown" and ctype3.lower() != "none" : # VELO
             v1 = crval3 + (1-crpix3) * cdelt3
             vfin = crval3 + (naxis3-crpix3) * cdelt3
             em_min = v1/c * freq
@@ -617,6 +649,7 @@ if exec_em_min_et_max or exec_all :
     cur.execute("""update obscore
         set em_min = 0.00085
         where obscore.obs_collection = 'J/ApJS/175/277'""")
+    
             
 
     conn.commit()
