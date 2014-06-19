@@ -203,8 +203,9 @@ if exec_vider or exec_all :
     logMe("Commit vidage BDD [OK]")
 
 
-
-# ############## 1_insert ############## :
+#########################################################
+##                     1_insert                        ##
+#########################################################  
 
 if exec_insert or exec_all :
     req = """
@@ -220,7 +221,9 @@ if exec_insert or exec_all :
 
 
 
-# ############## 2_obs_collection ############## :
+#########################################################
+##                  2_obs_collection                   ##
+#########################################################  
 
 if exec_obs_collection or exec_all :
     req = """
@@ -237,7 +240,9 @@ if exec_obs_collection or exec_all :
 
 
 
-# ############## 3_dataproduct_type ############## :
+#########################################################
+##                 3_dataproduct_type                  ##
+#########################################################  
 
 if exec_dataproduct_type or exec_all :
     # construction de la liste des catalogues contenant des cubes :
@@ -285,7 +290,9 @@ if exec_dataproduct_type or exec_all :
 
 
 
-# ############## 4_obs_id ############## :
+#########################################################
+##                      4_obs_id                       ##
+#########################################################  
 
 if exec_obs_id or exec_all :
     res = []
@@ -304,7 +311,9 @@ if exec_obs_id or exec_all :
 
 
 
-# ############## 5_obs_publisher_did ############## :
+#########################################################
+##                  5_obs_publisher_did                ##
+#########################################################  
 
 if exec_obs_publisher_did or exec_all :
     cur.execute("""
@@ -316,7 +325,9 @@ if exec_obs_publisher_did or exec_all :
     
     
     
-# ############## 6_obs_creator_name ############## :
+#########################################################
+##                  6_obs_creator_name                 ##
+#########################################################  
 
 if exec_obs_creator_name or exec_all :
 
@@ -343,7 +354,9 @@ if exec_obs_creator_name or exec_all :
 
 
 
-# ################# 7_t_min ################# :
+#########################################################
+##                       7_t_min                       ##
+#########################################################
 
 if exec_t_min or exec_all :
     ls_date = getListeClassesAvecLaColonne(cur, "_date")
@@ -439,8 +452,10 @@ if exec_t_min or exec_all :
     logMe("Commit t_min [OK]")
     
     
-            
-# ################# 8_t_exptime ################# :
+    
+#########################################################
+##                      8_t_exptime                    ##
+#########################################################
 
 if exec_t_exposure_time or exec_all :
     ls_expo = getListeClassesAvecLaColonne(cur, "_exposure")
@@ -460,8 +475,10 @@ if exec_t_exposure_time or exec_all :
     logMe("Commit t_exptime [OK]")
 
 
-    
-# ################# 9_access_estsize ################# :
+
+#########################################################
+##                   9_access_estsize                  ##
+#########################################################
 
 if exec_access_estsize or exec_all :    
     
@@ -483,7 +500,9 @@ if exec_access_estsize or exec_all :
 
 
 
-# ################# 10_s_resolution ################# :
+#########################################################
+##                   10_s_resolution                   ##
+#########################################################
 
 if exec_s_resolution or exec_all :
     
@@ -517,7 +536,9 @@ if exec_s_resolution or exec_all :
     
     
     
-# ################# 11_facility_name ################# :
+#########################################################
+##                   11_facility_name                  ##
+#########################################################
     
 if exec_facility_name or exec_all :
     ls_telescop = getListeClassesAvecLaColonne(cur, "_telescop")
@@ -540,7 +561,9 @@ if exec_facility_name or exec_all :
 
 
 
-# ################# 12_instrument_name ################# :
+#########################################################
+##                   12_instrument_name                ##
+#########################################################
 
 if exec_instrument_name or exec_all :
     res = getContenuColonnes(cur, ["_instru", "_instrum", "_instrume"] )
@@ -556,7 +579,9 @@ if exec_instrument_name or exec_all :
 
 
 
-# ################# 13 em_min et em_max ################# :
+#########################################################
+##                  13 em_min et em_max                ##
+#########################################################
 
 if exec_em_min_et_max or exec_all :
     res=getContenuColonnes(cur, ["_restfreq", "_restfrq", "_freq", "_frequ", "_freque",
