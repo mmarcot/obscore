@@ -650,8 +650,26 @@ if exec_em_min_et_max or exec_all :
         set em_min = 0.00085
         where obscore.obs_collection = 'J/ApJS/175/277'""")
     
-            
-
+    # requete spécifique au catalogue V/127A :
+    res = []
+    cur.execute("""
+        select oidsaada, _filter
+        from imgv_127a
+        """)
+    res = cur.fetchall()
+    for tu in res :
+        if tu[1] == "HA659" :
+            cur.execute("""
+                update obscore
+                set em_min = 0.000000659
+                where obscore.oidsaada = """ + str(tu[0]) + ";")
+        elif tu[1] == "OG590" :
+            cur.execute("""
+                update obscore
+                set em_min = 0.000000590
+                where obscore.oidsaada = """ + str(tu[0]) + ";")
+        
+        
     conn.commit()
     logMe("Commit em_min et em_max [OK]")
 
