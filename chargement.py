@@ -156,7 +156,7 @@ def calculerJours(p_date):
 
 # connexion à la BDD :
 try :
-    conn = psycopg2.connect("dbname='VizieR' user='postgres' host='localhost' password='reverser'")
+    conn = psycopg2.connect("dbname='vizier2' user='postgres' host='localhost' password='reverser'")
     logMe("Connection à la BDD établie")
 except :
     logMe("Erreur lors de la connection à la BDD")
@@ -165,7 +165,7 @@ cur = conn.cursor()
 
 
 # choisir les étapes à executer :
-exec_all = False
+exec_all = True
 exec_vider = False
 exec_insert = False
 exec_obs_collection = False
@@ -179,7 +179,7 @@ exec_access_estsize = False
 exec_s_resolution = False
 exec_facility_name = False
 exec_instrument_name = False
-exec_em_min_et_max = True
+exec_em_min_et_max = False
 
 
 # chargement de la liste des collections (.._image) et des classes (imgj_aa_ ..) :
@@ -210,7 +210,7 @@ if exec_vider or exec_all :
 if exec_insert or exec_all :
     req = """
         insert into obscore(oidsaada, sky_pixel_csa, s_ra, s_dec, access_url, s_region, s_fov, access_format)
-            select oidsaada, sky_pixel_csa, pos_ra_csa, pos_dec_csa, product_url_csa, shape_csa, (size_alpha_csa+size_delta_csa)/2, 'image/fits' 
+            select oidsaada, sky_pixel_csa, pos_ra_csa, pos_dec_csa, 'http://obs-stage-s4.u-strasbg.fr:8080/vizier2/getproduct?oid=' || oidsaada, shape_csa, (size_alpha_csa+size_delta_csa)/2, 'image/fits' 
             from {table};
         """
     for collec_image in liste_collec :
@@ -482,13 +482,17 @@ if exec_t_exposure_time or exec_all :
 
 if exec_access_estsize or exec_all :    
     
-    # on recupère l'oidsaada + l'access url de toutes le lignes de la table obscore :
+#     # on recupère l'oidsaada + l'access url de toutes le lignes de la table obscore :
+#     res = []
+#     cur.execute("""
+#         select oidsaada, access_url
+#         from obscore
+#         """)
+#     res = cur.fetchall()
+
     res = []
-    cur.execute("""
-        select oidsaada, access_url
-        from obscore
-        """)
-    res = cur.fetchall()
+    for collec in liste_collec :
+        res += getContenuColonne(cur, collec, "product_url_csa")
     
     # puis on insert ligne par ligne dans obscore :
     for tu in res :
