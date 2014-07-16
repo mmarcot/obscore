@@ -165,7 +165,7 @@ cur = conn.cursor()
 
 
 # choisir les étapes à executer :
-exec_all = True
+exec_all = False
 exec_vider = False
 exec_insert = False
 exec_obs_collection = False
@@ -180,6 +180,7 @@ exec_s_resolution = False
 exec_facility_name = False
 exec_instrument_name = False
 exec_em_min_et_max = False
+exec_s_region = True
 
 
 # chargement de la liste des collections (.._image) et des classes (imgj_aa_ ..) :
@@ -695,12 +696,63 @@ if exec_em_min_et_max or exec_all :
     logMe("Commit em_min et em_max [OK]")
 
 
+
 #########################################################
 ##                      14 s_region                    ##
 #########################################################
 
-
-
+if exec_s_region or exec_all :
+    res = []
+    
+    # on extrait toutes les variables dont on a besoin pour le calcul de s_region :
+    for collec in liste_collec :
+        cur.execute("""
+                    SELECT oidsaada, cd1_1_csa, cd1_2_csa, cd2_1_csa, cd2_2_csa, naxis1, naxis2, crpix1_csa, crpix2_csa, crval1_csa, crval2_csa
+                    FROM {}
+        """.format(collec))
+        res += cur.fetchall()
+        
+    # traitement des données :
+    for tu in res :
+        try :
+            oidsaada = int(tu[0])
+            cd11 = float(tu[1])
+            cd12 = float(tu[2])
+            cd21 = float(tu[3])
+            cd22 = float(tu[4])
+            naxis1 = int(tu[5])
+            naxis2 = int(tu[6])
+            crpix1 = float(tu[7])
+            crpix2 = float(tu[8])
+            crval1 = float(tu[9])
+            crval2 = float(tu[10])
+        except TypeError :
+            pass
+        
+        # on determine les 4 points :
+        ls_points = [(1,1), (1,naxis2), (naxis1,naxis2), (naxis1,1)]
+        s_region = ""
+        i = 0
+        # on calcul le s_region :
+        for point in ls_points :
+            x = point[0]
+            y = point[1]
+            alpha = cd11 * (x - crpix1) + cd12 * (y - crpix2) + crval1
+            delta = cd21 * (x - crpix1) + cd22 * (y - crpix2) + crval2
+            s_region += str(alpha) + "_" + str(delta)     
+            if i != len(ls_points)-1 :
+                s_region += "_"    
+            i+=1
+        
+        # mise à jour de s_region pour cet enregistrement :
+        cur.execute("""
+                    UPDATE obscore
+                    SET s_region = '{}'
+                    WHERE obscore.oidsaada = {}""".format(s_region, str(oidsaada)))
+        
+    
+    conn.commit()
+    logMe("Commit s_region [OK]")
 
 
 
